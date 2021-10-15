@@ -6,19 +6,6 @@
 <div>
     <EditForm Model="oStorage">
         <div class="form-group">
-            <label>Referencia:</label>
-            <InputText @bind-Value="oStorage.StorageId" class="form-control" />
-        </div>
-        <!--No muestro la fecha, pero se guarda con la fecha actual igual
-        <div class="form-group">
-            <label>Fecha de última actualización:</label>
-            <InputDate @bind-Value="oStorage.LastUpdate" class="form-control" />
-        </div>-->
-        <div class="form-group">
-            <label>Cantidad parcial:</label>
-            <InputNumber @bind-Value="oStorage.PartialQuantity" class="form-control" />
-        </div>
-        <div class="form-group">
             <label>Producto:</label>
             <InputSelect @bind-Value="oStorage.ProductId" class="form-control">
                 <option value="">Seleccione un producto...</option>
@@ -43,9 +30,14 @@
 
     </EditForm>
 </div>
+<div class="text-center h4">
+    @messagge
+</div>
 
 
 @code {
+    string messagge;
+
     StorageEntity oStorage = new StorageEntity();
 
     List<ProductEntity> products = new List<ProductEntity>();
@@ -53,17 +45,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Inicializo la fecha con el dia de hoy
-        oStorage.LastUpdate = DateTime.Today;
         products = B_Product.ProductList();
         warehouses = B_Warehouse.WarehouseList();
     }
 
     private void SaveStorage()
     {
-        B_Storage.CreateStorage(oStorage);
+        //Creo un ID estandarizado con el ID del deposito y el producto
+        oStorage.StorageId = $"{oStorage.WarehouseId}-{oStorage.ProductId}";
 
-        NavManager.NavigateTo("storage/list");
+        if (!B_Storage.IsProductInWarehouse(oStorage.StorageId))
+        {
+            // Inicializo la fecha con el dia de hoy
+            oStorage.LastUpdate = DateTime.Today;
+
+            B_Storage.CreateStorage(oStorage);
+            messagge = "Producto registrado";
+            }
+        else
+        {
+            messagge = "El producto ya existe en la bodega!";
+        }
+
 
     }
 }
